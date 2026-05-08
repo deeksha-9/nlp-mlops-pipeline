@@ -1,0 +1,31 @@
+# render.yaml
+
+services:
+  # Define a web service
+  - type: web
+    name: nlp-sentiment-api
+    env: python
+    region: oregon  # Choose: oregon, frankfurt, singapore
+    plan: free  # Free tier
+    
+    # Build command - runs once during deployment
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python src/train.py
+    
+    # Start command - runs your API server
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    
+    # Health check endpoint
+    healthCheckPath: /health
+    
+    # Auto-deploy on git push
+    autoDeploy: true
+    
+    # Environment variables
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: MLFLOW_TRACKING_URI
+        value: ./mlruns

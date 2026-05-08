@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# MLflow & Model artifacts
+mlruns/
+mlflow.db
+.mlflow
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# DVC - only ignore cache and tmp (track .dvc files and .dvc/ directory)
+.dvc/cache/
+.dvc/tmp/
+.dvc/.coverage
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# Config
+config/
+.config/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Local notebooks (optional - remove if you want to track them)
+notebooks/*.ipynb

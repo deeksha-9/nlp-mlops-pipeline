@@ -1,4 +1,4 @@
 [core]
     remote = myremote
 ['remote "myremote"']
-    url = gdrive://1_lXqKtQodsVgF8iub6qjW5lOkr5POVOP
+    url = G:\My Drive\mlops-dvc-storage

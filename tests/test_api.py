@@ -5,12 +5,67 @@ Tests all endpoints to ensure they work correctly before deployment.
 """
 
 import pytest
+from unittest.mock import Mock
 from fastapi.testclient import TestClient
+import api.main
 from api.main import app
 
 # ============================================================
-# SETUP: Create a test client
+# SETUP: Create mock model for testing
 # ============================================================
+
+def create_mock_model():
+    """Create a mock sentiment model that mimics the real model"""
+    mock = Mock()
+    
+    def predict_side_effect(texts):
+        """Mock prediction logic - keyword matching"""
+        results = []
+        positive_words = ["good", "great", "amazing", "loved", "excellent", "superb", "engaging", "best", "wonderful", "fantastic"]
+        negative_words = ["bad", "terrible", "worst", "hate", "awful", "boring", "waste", "horrible"]
+        
+        text_list = texts if isinstance(texts, list) else [texts]
+        for text in text_list:
+            text_lower = text.lower()
+            pos_count = sum(1 for word in positive_words if word in text_lower)
+            neg_count = sum(1 for word in negative_words if word in text_lower)
+            
+            # 1 for positive, 0 for negative
+            prediction = 1 if pos_count > neg_count else 0
+            results.append(prediction)
+        
+        return results[0] if not isinstance(texts, list) else results
+    
+    def predict_proba_side_effect(texts):
+        """Mock probability predictions"""
+        results = []
+        positive_words = ["good", "great", "amazing", "loved", "excellent", "superb", "engaging", "best", "wonderful", "fantastic"]
+        negative_words = ["bad", "terrible", "worst", "hate", "awful", "boring", "waste", "horrible"]
+        
+        text_list = texts if isinstance(texts, list) else [texts]
+        for text in text_list:
+            text_lower = text.lower()
+            pos_count = sum(1 for word in positive_words if word in text_lower)
+            neg_count = sum(1 for word in negative_words if word in text_lower)
+            
+            total = pos_count + neg_count + 2  # +2 to avoid division by zero
+            neg_prob = neg_count / total
+            pos_prob = pos_count / total
+            
+            results.append([neg_prob, pos_prob])
+        
+        return results[0] if not isinstance(texts, list) else results
+    
+    mock.predict = Mock(side_effect=predict_side_effect)
+    mock.predict_proba = Mock(side_effect=predict_proba_side_effect)
+    return mock
+
+# ============================================================
+# SETUP: Initialize mock model before creating test client
+# ============================================================
+
+# Set the mock model in api.main so it's available during tests
+api.main.model = create_mock_model()
 
 # TestClient simulates HTTP requests without starting a real server
 # It's faster than real HTTP calls and works offline
@@ -161,8 +216,8 @@ def test_predict_empty_text():
     Test that empty text is rejected.
     
     What it checks:
-    - Returns 400 (Bad Request)
-    - Error message is clear
+    - Returns 422 (Pydantic validation error)
+    - FastAPI uses 422 for request validation failures
     """
     test_input = {
         "text": ""
@@ -170,8 +225,8 @@ def test_predict_empty_text():
     
     response = client.post("/predict", json=test_input)
     
-    # Should return 400 for bad input
-    assert response.status_code == 400, "Empty text should return 400"
+    # Should return 422 for Pydantic validation error (min_length constraint)
+    assert response.status_code == 422, "Empty text should return 422 (validation error)"
     
     data = response.json()
     assert "detail" in data, "Error response should contain 'detail'"

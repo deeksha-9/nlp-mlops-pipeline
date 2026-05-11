@@ -68,5 +68,5 @@ config/
 Thumbs.db
 .DS_Store
 
-# Local notebooks (optional - remove if you want to track them)
-notebooks/*.ipynb
+# Data (too large for git - will be in repo or downloaded)
+*.zip

@@ -1,7 +1,7 @@
 # api/main.py
 """
 Sentiment Analysis API
-Loads a trained model from MLflow (SQLite backend) and serves predictions via REST API.
+Loads a trained model from MLflow and serves predictions via REST API.
 """
 
 import os
@@ -62,25 +62,25 @@ class HealthResponse(BaseModel):
 
 MODEL_NAME = "sentiment-model"
 model = None
-model_path = None
+model_version = None
 
 @app.on_event("startup")
 async def load_model():
     """
-    Load the model from MLflow - works with SQLite backend.
+    Load the model from MLflow using file-based tracking.
+    Tries registry first, falls back to run artifacts.
     """
-    global model, model_path
+    global model, model_version
     
     try:
-        # Use SQLite backend (matching your train.py)
-        mlflow_uri = os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
-        mlflow.set_tracking_uri(mlflow_uri)
+        # Use file-based tracking (same as training)
+        mlflow.set_tracking_uri("./mlruns")
         
         logger.info("Starting up...")
-        logger.info(f"MLflow tracking URI: {mlflow_uri}")
-        logger.info("Loading model from MLflow registry...")
+        logger.info("MLflow tracking URI: ./mlruns")
+        logger.info("Loading model from MLflow...")
         
-        # Try loading from Model Registry first
+        # Strategy 1: Try loading from Model Registry
         try:
             from mlflow.tracking import MlflowClient
             client = MlflowClient()
@@ -88,55 +88,60 @@ async def load_model():
             # Get all versions of the model
             versions = client.search_model_versions(f"name='{MODEL_NAME}'")
             
-            if not versions:
-                raise Exception(f"No versions found for model '{MODEL_NAME}'")
-            
-            # Get the latest version number
-            latest_version = max([int(v.version) for v in versions])
-            
-            model_uri = f"models:/{MODEL_NAME}/{latest_version}"
-            logger.info(f"Loading model: {model_uri}")
-            
-            model = mlflow.sklearn.load_model(model_uri)
-            model_path = f"version-{latest_version}"
-            
-            logger.info("✓ Model loaded successfully from registry!")
-            logger.info(f"  Model: {MODEL_NAME}")
-            logger.info(f"  Version: {latest_version}")
-            
+            if versions:
+                # Get the latest version
+                latest = max(versions, key=lambda v: int(v.version))
+                model_version = latest.version
+                
+                model_uri = f"models:/{MODEL_NAME}/{model_version}"
+                logger.info(f"Loading from registry: {model_uri}")
+                
+                model = mlflow.sklearn.load_model(model_uri)
+                
+                logger.info("✓ Model loaded successfully from registry!")
+                logger.info(f"  Model: {MODEL_NAME}")
+                logger.info(f"  Version: {model_version}")
+                return
+            else:
+                raise Exception("No model versions found in registry")
+                
         except Exception as e1:
             logger.warning(f"Registry load failed: {e1}")
             logger.info("Trying to load from run artifacts...")
+        
+        # Strategy 2: Load from run artifacts (fallback)
+        model_paths = glob.glob("./mlruns/*/*/artifacts/model")
+        
+        if not model_paths:
+            # Show debug info
+            logger.error("No model found!")
+            logger.error("Directory contents:")
+            for root, dirs, files in os.walk("./mlruns"):
+                level = root.replace("./mlruns", "").count(os.sep)
+                if level < 3:  # Don't go too deep
+                    indent = " " * 2 * level
+                    logger.error(f"{indent}{os.path.basename(root)}/")
             
-            # Fallback: Load from run artifacts
-            model_paths = []
-            
-            # Search in both possible locations
-            for pattern in [
-                "./mlruns/*/*/artifacts/model",
-                "./mlruns/*/models/*/artifacts"
-            ]:
-                model_paths.extend(glob.glob(pattern))
-            
-            if not model_paths:
-                raise Exception(
-                    "No model found! Make sure 'python src/train.py' completed successfully. "
-                    f"Original error: {e1}"
-                )
-            
-            # Get the most recently created model
-            model_path = max(model_paths, key=os.path.getmtime)
-            
-            logger.info(f"Loading from artifacts: {model_path}")
-            model = mlflow.sklearn.load_model(model_path)
-            
-            logger.info("✓ Model loaded successfully from artifacts!")
+            raise Exception(
+                "No model found! Ensure 'python src/train.py' ran successfully during build."
+            )
+        
+        # Get the most recently created model
+        latest_model_path = max(model_paths, key=os.path.getmtime)
+        
+        logger.info(f"Loading from artifacts: {latest_model_path}")
+        model = mlflow.sklearn.load_model(latest_model_path)
+        model_version = latest_model_path.split(os.sep)[2]  # Extract run ID
+        
+        logger.info("✓ Model loaded successfully from artifacts!")
+        logger.info(f"  Path: {latest_model_path}")
         
     except Exception as e:
         logger.error(f"✗ Failed to load model: {str(e)}")
-        logger.error("Make sure:")
-        logger.error("  1. python src/train.py completed successfully")
-        logger.error("  2. Model was registered in MLflow")
+        logger.error("Troubleshooting:")
+        logger.error("  1. Check that 'python src/train.py' completed in build logs")
+        logger.error("  2. Verify data/IMDB Dataset.csv exists")
+        logger.error("  3. Check build command includes: python src/train.py")
         raise
 
 # ============================================================
@@ -174,7 +179,6 @@ async def predict_sentiment(request: ReviewRequest):
     
     **Output:** Sentiment (positive/negative) with confidence score
     """
-    # Check if model is loaded
     if model is None:
         raise HTTPException(
             status_code=503,
@@ -182,7 +186,6 @@ async def predict_sentiment(request: ReviewRequest):
         )
     
     try:
-        # Get input text
         text = request.text.strip()
         
         if not text:
@@ -192,21 +195,19 @@ async def predict_sentiment(request: ReviewRequest):
             )
         
         # Make prediction
-        prediction = model.predict([text])[0]  # Returns 0 or 1
-        probabilities = model.predict_proba([text])[0]  # Returns [prob_neg, prob_pos]
+        prediction = model.predict([text])[0]
+        probabilities = model.predict_proba([text])[0]
         
-        # Convert to human-readable format
         sentiment = "positive" if prediction == 1 else "negative"
-        confidence = float(probabilities[prediction])  # Confidence in the predicted class
+        confidence = float(probabilities[prediction])
         
-        # Log the prediction
         logger.info(f"Prediction: {sentiment} (confidence: {confidence:.3f})")
         
         return {
             "text": text,
             "sentiment": sentiment,
             "confidence": round(confidence, 4),
-            "model_version": model_path if model_path else "unknown"
+            "model_version": str(model_version) if model_version else "unknown"
         }
         
     except Exception as e:
@@ -253,10 +254,6 @@ async def predict_batch(texts: list[str]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================
-# STEP 5: Run the app (for development only)
-# ============================================================
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
@@ -265,5 +262,3 @@ if __name__ == "__main__":
         port=8000,
         reload=True
     )
-#uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
-#http://127.0.0.1:8000/docs

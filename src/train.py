@@ -2,6 +2,7 @@
 """
 Train a sentiment analysis model on IMDB reviews.
 Logs all experiments to MLflow and registers the model.
+Uses file-based tracking (./mlruns) for compatibility with Render.
 """
 
 import pandas as pd
@@ -19,7 +20,7 @@ from mlflow.tracking import MlflowClient
 # ============================================================
 
 print("Loading dataset...")
-df = pd.read_csv(r"data/IMDB_Dataset.csv")
+df = pd.read_csv("data/IMDB_Dataset.csv")
 
 # Convert sentiment labels to binary (0=negative, 1=positive)
 X = df['review']
@@ -45,7 +46,10 @@ print(f"Training samples: {len(X_train)}, Test samples: {len(X_test)}")
 # STEP 3: Set up MLflow experiment
 # ============================================================
 
-#mlflow.set_tracking_uri("./mlruns")
+# Use file-based tracking (works on both local and Render)
+mlflow.set_tracking_uri("./mlruns")
+print(f"MLflow tracking URI: ./mlruns")
+
 mlflow.set_experiment("sentiment-analysis-imdb")
 
 # ============================================================
@@ -134,6 +138,6 @@ with mlflow.start_run(run_name="baseline-tfidf-logreg"):
     print("="*60)
     print(f"\n✓ Model saved to MLflow!")
     print(f"✓ Model registered as 'sentiment-model' version {model_version}")
-    print(f"View results at: http://localhost:5000")
+    print(f"Model location: ./mlruns")
 
 print("\nDone! Model is ready for deployment.")

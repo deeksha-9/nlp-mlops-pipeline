@@ -1,0 +1,16 @@
+creation_timestamp: 1778961128420
+current_stage: None
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1778961128420
+model_id: m-ac85a47e2d11464697535f3978a434e5
+name: sentiment-model
+run_id: 0dd3f58b78654a948649d1349c3870af
+run_link: null
+source: models:/m-ac85a47e2d11464697535f3978a434e5
+status: READY
+status_message: null
+storage_location: file:D:/vscode/MlOps/nlp-mlops-pipeline/mlruns/500744080411176522/models/m-ac85a47e2d11464697535f3978a434e5/artifacts
+user_id: null
+version: 1
+workspace: default

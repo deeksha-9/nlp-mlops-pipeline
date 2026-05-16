@@ -1,0 +1,14 @@
+artifact_uri: file:D:/vscode/MlOps/nlp-mlops-pipeline/mlruns/500744080411176522/0dd3f58b78654a948649d1349c3870af/artifacts
+end_time: 1778961128495
+entry_point_name: ''
+experiment_id: '500744080411176522'
+lifecycle_stage: active
+run_id: 0dd3f58b78654a948649d1349c3870af
+run_name: baseline-tfidf-logreg
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778961079230
+status: 3
+tags: []
+user_id: Deeksha Priya

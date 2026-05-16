@@ -1,7 +1,7 @@
 artifact_location: file:D:/vscode/MlOps/nlp-mlops-pipeline/mlruns/0
-creation_time: 1778961077945
+creation_time: 1778962127727
 experiment_id: '0'
-last_update_time: 1778961077945
+last_update_time: 1778962127727
 lifecycle_stage: active
 name: Default
 trace_location: null

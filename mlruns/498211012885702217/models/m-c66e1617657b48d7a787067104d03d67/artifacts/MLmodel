@@ -1,4 +1,4 @@
-artifact_path: file:D:/vscode/MlOps/nlp-mlops-pipeline/mlruns/500744080411176522/models/m-ac85a47e2d11464697535f3978a434e5/artifacts
+artifact_path: file:D:/vscode/MlOps/nlp-mlops-pipeline/mlruns/498211012885702217/models/m-c66e1617657b48d7a787067104d03d67/artifacts
 flavors:
   python_function:
     env:
@@ -15,9 +15,9 @@ flavors:
     sklearn_version: 1.8.0
     skops_trusted_types: null
 mlflow_version: 3.11.1
-model_id: m-ac85a47e2d11464697535f3978a434e5
+model_id: m-c66e1617657b48d7a787067104d03d67
 model_size_bytes: 183040
-model_uuid: m-ac85a47e2d11464697535f3978a434e5
+model_uuid: m-c66e1617657b48d7a787067104d03d67
 prompts: null
-run_id: 0dd3f58b78654a948649d1349c3870af
-utc_time_created: '2026-05-16 19:51:39.557110'
+run_id: 598b8583de004ed09d5bfe392f4eeac6
+utc_time_created: '2026-05-16 20:09:09.470900'

@@ -28,11 +28,8 @@ ENV/
 env/
 .venv
 
-# MLflow & Model artifacts - track models but ignore cache/temp
+# MLflow & Model artifacts - track models but ignore metadata
 mlruns/*/.trash/
-mlruns/*/params/
-mlruns/*/metrics/
-mlruns/*/tags/
 mlflow.db
 .mlflow
 

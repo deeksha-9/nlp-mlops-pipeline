@@ -1,8 +1,0 @@
-artifact_location: file:D:/vscode/MlOps/nlp-mlops-pipeline/mlruns/500744080411176522
-creation_time: 1778961077987
-experiment_id: '500744080411176522'
-last_update_time: 1778961077987
-lifecycle_stage: active
-name: sentiment-analysis-imdb
-trace_location: null
-workspace: default

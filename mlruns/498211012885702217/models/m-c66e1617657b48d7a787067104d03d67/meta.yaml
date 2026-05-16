@@ -1,0 +1,10 @@
+artifact_location: file:D:/vscode/MlOps/nlp-mlops-pipeline/mlruns/498211012885702217/models/m-c66e1617657b48d7a787067104d03d67/artifacts
+creation_timestamp: 1778962149355
+experiment_id: '498211012885702217'
+last_updated_timestamp: 1778962160744
+model_id: m-c66e1617657b48d7a787067104d03d67
+model_type: null
+name: model
+source_run_id: 598b8583de004ed09d5bfe392f4eeac6
+status: 2
+status_message: null

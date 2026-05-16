@@ -1,8 +1,8 @@
 aliases: {}
-creation_timestamp: 1778961128412
+creation_timestamp: 1778962160821
 deployment_job_id: null
 deployment_job_state: null
 description: null
-last_updated_timestamp: 1778961128420
+last_updated_timestamp: 1778962160830
 name: sentiment-model
 workspace: default

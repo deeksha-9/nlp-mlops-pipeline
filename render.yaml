@@ -9,19 +9,7 @@ services:
     plan: free  # Free tier
     
 # Build command - runs once during deployment
-    buildCommand: |
-      set -e
-      pwd
-      ls -la
-      echo "=== Installing dependencies ==="
-      pip install --upgrade pip
-      pip install -r requirements.txt
-      echo "=== Checking dataset ==="
-      ls -la data/
-      echo "=== Training model ==="
-      python src/train.py
-      echo "=== Training complete ==="
-      ls -la mlruns/
+    buildCommand: bash build.sh
     
     # Start command - runs your API server
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT

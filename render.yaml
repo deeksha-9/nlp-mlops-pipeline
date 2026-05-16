@@ -11,12 +11,17 @@ services:
 # Build command - runs once during deployment
     buildCommand: |
       set -e
+      pwd
+      ls -la
       echo "=== Installing dependencies ==="
       pip install --upgrade pip
       pip install -r requirements.txt
+      echo "=== Checking dataset ==="
+      ls -la data/
       echo "=== Training model ==="
-      python src/train.py || { echo "Training failed!"; exit 1; }
-      echo "=== Build complete ==="
+      python src/train.py
+      echo "=== Training complete ==="
+      ls -la mlruns/
     
     # Start command - runs your API server
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT

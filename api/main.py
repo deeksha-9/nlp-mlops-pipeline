@@ -72,50 +72,65 @@ async def load_model():
     """
     import os
     global model, model_version
-    
+
     try:
         # Use file-based tracking (same as training)
         mlflow.set_tracking_uri("./mlruns")
-        
+
         logger.info("=" * 60)
         logger.info("STARTUP: Loading model...")
         logger.info(f"Current working directory: {os.getcwd()}")
         logger.info(f"MLflow tracking URI: ./mlruns")
         logger.info(f"MLflow directory exists: {os.path.exists('./mlruns')}")
         logger.info("=" * 60)
-        
-        # Strategy 1: Try loading from Model Registry
+
+        # Strategy 1: Try loading from Model Registry (skip if paths are broken)
         try:
             from mlflow.tracking import MlflowClient
             client = MlflowClient()
-            
+
             # Get all versions of the model
             versions = client.search_model_versions(f"name='{MODEL_NAME}'")
-            
+
             if versions:
-                # Get the latest version
-                latest = max(versions, key=lambda v: int(v.version))
-                model_version = latest.version
-                
-                model_uri = f"models:/{MODEL_NAME}/{model_version}"
-                logger.info(f"Loading from registry: {model_uri}")
-                
-                model = mlflow.sklearn.load_model(model_uri)
-                
-                logger.info("Model loaded successfully from registry!")
-                logger.info(f"  Model: {MODEL_NAME}")
-                logger.info(f"  Version: {model_version}")
-                return
+                # Get the latest version - but only if the artifact path exists
+                for latest in sorted(versions, key=lambda v: int(v.version), reverse=True):
+                    model_version = latest.version
+
+                    # Check if the artifact path actually exists before trying to load
+                    if latest.source:
+                        artifact_path = latest.source.replace("file://", "").replace("\\", "/")
+                        if os.path.exists(artifact_path):
+                            model_uri = f"models:/{MODEL_NAME}/{model_version}"
+                            logger.info(f"Loading from registry: {model_uri}")
+                            model = mlflow.sklearn.load_model(model_uri)
+                            logger.info("Model loaded successfully from registry!")
+                            logger.info(f"  Model: {MODEL_NAME}")
+                            logger.info(f"  Version: {model_version}")
+                            return
+
+                raise Exception("No valid model versions found in registry")
             else:
                 raise Exception("No model versions found in registry")
-                
+
         except Exception as e1:
             logger.warning(f"Registry load failed: {e1}")
             logger.info("Trying to load from run artifacts...")
-        
+
         # Strategy 2: Load from run artifacts (fallback)
+        # Search in multiple possible locations
         model_paths = glob.glob("./mlruns/*/*/artifacts/model")
-        
+
+        if not model_paths:
+            # Also search in models registry subdirectories
+            model_paths = glob.glob("./mlruns/*/models/*/artifacts")
+
+        if not model_paths:
+            # Search outputs directory
+            model_paths = glob.glob("./mlruns/*/*/outputs/*/MLmodel")
+            if model_paths:
+                model_paths = [os.path.dirname(p) for p in model_paths]
+
         if not model_paths:
             # Show debug info
             logger.error("No model found!")
@@ -125,26 +140,26 @@ async def load_model():
                 if level < 3:  # Don't go too deep
                     indent = " " * 2 * level
                     logger.error(f"{indent}{os.path.basename(root)}/")
-            
+
             raise Exception(
                 "No model found! Ensure 'python src/train.py' ran successfully during build."
             )
-        
+
         # Get the most recently created model
         latest_model_path = max(model_paths, key=os.path.getmtime)
-        
+
         logger.info(f"Loading from artifacts: {latest_model_path}")
         model = mlflow.sklearn.load_model(latest_model_path)
         model_version = latest_model_path.split(os.sep)[2]  # Extract run ID
-        
+
         logger.info("Model loaded successfully from artifacts!")
         logger.info(f"  Path: {latest_model_path}")
-        
+
     except Exception as e:
         logger.error(f"Failed to load model: {str(e)}")
         logger.error("Troubleshooting:")
         logger.error("  1. Check that 'python src/train.py' completed in build logs")
-        logger.error("  2. Verify data/IMDB Dataset.csv exists")
+        logger.error("  2. Verify data/IMDB_Dataset.csv exists")
         logger.error("  3. Check build command includes: python src/train.py")
         raise
 

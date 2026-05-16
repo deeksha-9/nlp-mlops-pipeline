@@ -102,7 +102,7 @@ async def load_model():
                 
                 model = mlflow.sklearn.load_model(model_uri)
                 
-                logger.info("✓ Model loaded successfully from registry!")
+                logger.info("Model loaded successfully from registry!")
                 logger.info(f"  Model: {MODEL_NAME}")
                 logger.info(f"  Version: {model_version}")
                 return
@@ -137,11 +137,11 @@ async def load_model():
         model = mlflow.sklearn.load_model(latest_model_path)
         model_version = latest_model_path.split(os.sep)[2]  # Extract run ID
         
-        logger.info("✓ Model loaded successfully from artifacts!")
+        logger.info("Model loaded successfully from artifacts!")
         logger.info(f"  Path: {latest_model_path}")
         
     except Exception as e:
-        logger.error(f"✗ Failed to load model: {str(e)}")
+        logger.error(f"Failed to load model: {str(e)}")
         logger.error("Troubleshooting:")
         logger.error("  1. Check that 'python src/train.py' completed in build logs")
         logger.error("  2. Verify data/IMDB Dataset.csv exists")

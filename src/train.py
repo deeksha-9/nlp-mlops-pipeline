@@ -151,8 +151,8 @@ with mlflow.start_run(run_name="baseline-tfidf-logreg"):
     print(f"Test Precision: {test_precision:.4f}")
     print(f"Test Recall:    {test_recall:.4f}")
     print("="*60)
-    print(f"\n✓ Model saved to MLflow!")
-    print(f"✓ Model registered as 'sentiment-model' version {model_version}")
+    print(f"\n[OK] Model saved to MLflow!")
+    print(f"[OK] Model registered as 'sentiment-model' version {model_version}")
     print(f"Model location: ./mlruns")
 
-print("\nDone! Model is ready for deployment.")
+print("\n[OK] Done! Model is ready for deployment.")

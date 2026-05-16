@@ -8,11 +8,15 @@ services:
     region: oregon  # Choose: oregon, frankfurt, singapore
     plan: free  # Free tier
     
-    # Build command - runs once during deployment
+# Build command - runs once during deployment
     buildCommand: |
+      set -e
+      echo "=== Installing dependencies ==="
       pip install --upgrade pip
       pip install -r requirements.txt
-      python src/train.py
+      echo "=== Training model ==="
+      python src/train.py || { echo "Training failed!"; exit 1; }
+      echo "=== Build complete ==="
     
     # Start command - runs your API server
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT

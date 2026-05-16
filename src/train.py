@@ -19,8 +19,20 @@ from mlflow.tracking import MlflowClient
 # STEP 1: Load and prepare data
 # ============================================================
 
+import os
+import sys
+
 print("Loading dataset...")
-df = pd.read_csv("data/IMDB_Dataset.csv")
+print(f"Current working directory: {os.getcwd()}")
+print(f"Dataset path: data/IMDB_Dataset.csv")
+print(f"File exists: {os.path.exists('data/IMDB_Dataset.csv')}")
+
+try:
+    df = pd.read_csv("data/IMDB_Dataset.csv")
+except FileNotFoundError as e:
+    print(f"ERROR: Dataset file not found: {e}")
+    print(f"Files in data directory: {os.listdir('data') if os.path.exists('data') else 'data/ does not exist'}")
+    sys.exit(1)
 
 # Convert sentiment labels to binary (0=negative, 1=positive)
 X = df['review']
@@ -56,13 +68,13 @@ mlflow.set_experiment("sentiment-analysis-imdb")
 # STEP 4: Train model and log everything to MLflow
 # ============================================================
 
-# Hyperparameters
-MAX_FEATURES = 10000
+# Hyperparameters - OPTIMIZED FOR DEPLOYMENT (fast training)
+MAX_FEATURES = 5000  # Reduced from 10000 for faster vectorization
 C_VALUE = 1.0
-MAX_ITER = 500
+MAX_ITER = 100  # Reduced from 500 for faster convergence
 
 print("\nStarting training...")
-print(f"Hyperparameters: max_features={MAX_FEATURES}, C={C_VALUE}")
+print(f"Hyperparameters: max_features={MAX_FEATURES}, C={C_VALUE}, solver=saga")
 
 with mlflow.start_run(run_name="baseline-tfidf-logreg"):
     
@@ -73,22 +85,25 @@ with mlflow.start_run(run_name="baseline-tfidf-logreg"):
     mlflow.log_param("test_size", 0.2)
     mlflow.log_param("vectorizer", "TfidfVectorizer")
     mlflow.log_param("classifier", "LogisticRegression")
+    mlflow.log_param("solver", "saga")  # Faster than lbfgs for large datasets
     
     # Build the model pipeline
     model = Pipeline([
         ('tfidf', TfidfVectorizer(
             max_features=MAX_FEATURES,
-            ngram_range=(1, 2),
+            ngram_range=(1, 1),  # Changed from (1,2) - unigrams only for speed
             min_df=5,
             strip_accents='unicode',
-            lowercase=True
+            lowercase=True,
+            dtype='float32'  # Use float32 instead of float64 for speed
         )),
         ('classifier', LogisticRegression(
             C=C_VALUE,
             max_iter=MAX_ITER,
             random_state=42,
-            solver='lbfgs',
-            n_jobs=-1
+            solver='saga',  # Changed from lbfgs - faster for large datasets
+            n_jobs=-1,
+            tol=0.01  # Increased tolerance for faster convergence
         ))
     ])
     

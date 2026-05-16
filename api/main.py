@@ -70,15 +70,19 @@ async def load_model():
     Load the model from MLflow using file-based tracking.
     Tries registry first, falls back to run artifacts.
     """
+    import os
     global model, model_version
     
     try:
         # Use file-based tracking (same as training)
         mlflow.set_tracking_uri("./mlruns")
         
-        logger.info("Starting up...")
-        logger.info("MLflow tracking URI: ./mlruns")
-        logger.info("Loading model from MLflow...")
+        logger.info("=" * 60)
+        logger.info("STARTUP: Loading model...")
+        logger.info(f"Current working directory: {os.getcwd()}")
+        logger.info(f"MLflow tracking URI: ./mlruns")
+        logger.info(f"MLflow directory exists: {os.path.exists('./mlruns')}")
+        logger.info("=" * 60)
         
         # Strategy 1: Try loading from Model Registry
         try:
